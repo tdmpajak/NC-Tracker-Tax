@@ -17,30 +17,6 @@ BRANCH_LIST.forEach((code) => {
   cabangSelect.appendChild(opt);
 });
 
-// ---------- Gerbang password akses form ----------
-const gateOverlay = document.getElementById('gateOverlay');
-const gatePassword = document.getElementById('gatePassword');
-const gateSubmit = document.getElementById('gateSubmit');
-const gateMsg = document.getElementById('gateMsg');
-
-function checkGate() {
-  // Sekali terbuka di tab ini, tidak perlu isi password lagi selama tab belum ditutup.
-  if (sessionStorage.getItem('nct_gate_unlocked') === '1') return;
-  gateOverlay.classList.add('open');
-}
-function tryUnlockGate() {
-  if (gatePassword.value === SUBMIT_GATE_PASSWORD) {
-    sessionStorage.setItem('nct_gate_unlocked', '1');
-    gateOverlay.classList.remove('open');
-    gateMsg.textContent = '';
-  } else {
-    gateMsg.textContent = 'Password salah, coba lagi.';
-  }
-}
-gateSubmit.addEventListener('click', tryUnlockGate);
-gatePassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlockGate(); });
-checkGate();
-
 // ---------- Dropzone ----------
 // Catatan: input file sudah ada di DALAM elemen <label>, jadi klik ke label
 // otomatis membuka dialog file (perilaku bawaan browser). Tidak perlu
@@ -98,7 +74,7 @@ form.addEventListener('submit', async (e) => {
   const noPaymentRequest = document.getElementById('noPaymentRequest').value.trim();
   const linkPaymentRequest = document.getElementById('linkPaymentRequest').value.trim();
 
-  if (!cabang || !BRANCH_PASSWORDS[cabang]) {
+  if (!cabang || !BRANCH_LIST.includes(cabang)) {
     statusMsg.textContent = 'Kode cabang wajib dipilih.';
     statusMsg.classList.add('err');
     return;
