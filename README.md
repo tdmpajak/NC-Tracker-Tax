@@ -6,8 +6,8 @@ Sistem logbook online untuk cabang mengirim berkas PDF (Payment Request) untuk v
 - Cabang kirim berkas PDF + data pengajuan melalui form online
 - Admin memantau semua pengajuan secara real-time (auto-refresh tiap 3 detik) di dashboard tracking
 - Admin upload balik berkas hasil verifikasi
-- **Password sebelum bisa buka/unduh link PDF** di tabel tracking, sesuai kode cabang (PDF-nya sendiri tidak dienkripsi -- ini gerbang di sisi website)
-- **Gerbang password** sebelum bisa mengakses form kirim berkas
+- **ID pengajuan sebagai "password"** untuk membuka link PDF di tabel tracking (setiap pengajuan sudah punya ID unik otomatis)
+- **Password otorisasi admin** wajib diisi sebelum menyimpan hasil verifikasi di tracking.html
 - Nomor ID pengajuan tersistem: `NCT-0007/050726` (nomor urut + tanggal)
 
 **Arsitektur:** HTML statis (GitHub Pages) → Google Apps Script (API) → Google Sheets (tracking) + Google Drive (penyimpanan PDF).
@@ -109,28 +109,32 @@ logbook-verifikasi/
 
 ### 7. Selesai — Bagikan Link
 
-- **Cabang** mengakses: `https://USERNAME.github.io/logbook-verifikasi/index.html` (akan diminta password akses: `pajak123`, bisa diganti di `assets/branch-config.js`)
+- **Cabang** mengakses: `https://USERNAME.github.io/logbook-verifikasi/index.html` (tidak perlu password, langsung isi form)
 - **Admin/tim pajak** mengakses: `https://USERNAME.github.io/logbook-verifikasi/tracking.html`
 - **Data mentah** selalu bisa dicek langsung di tab `Tracking` pada Google Sheet Anda.
 
 ---
 
-## Cara Kerja Gerbang Password Link PDF
+## Cara Kerja Gerbang ID Pengajuan (untuk buka link PDF)
 
 1. Di tabel tracking (`tracking.html`), kolom "Pengajuan" dan "Hasil Verifikasi" menampilkan tombol "Lihat PDF"/"Lihat Hasil" (bukan link langsung).
-2. Saat tombol itu diklik, muncul kotak minta password sesuai kode cabang pada baris tersebut.
-3. Kalau password yang dimasukkan benar (dicocokkan ke `assets/branch-config.js`), berkas PDF terbuka di tab baru. Kalau salah, muncul pesan error dan berkas tidak terbuka.
-4. PDF itu sendiri **tidak dienkripsi/dikunci** -- ini murni gerbang di sisi tampilan website. Cara paling praktis dan cepat, cocok untuk mencegah orang iseng, tapi bukan proteksi tingkat lanjut.
+2. Saat tombol itu diklik, muncul kotak minta **ID pengajuan** baris tersebut (format `NCT-0001/tanggal`, sudah otomatis dibuat sistem saat cabang mengirim berkas -- lihat kolom "ID" di Google Sheets, atau pesan "Berhasil dikirim" yang muncul di index.html saat submit).
+3. Kalau ID yang dimasukkan cocok dengan ID baris tersebut, berkas PDF terbuka di tab baru. Kalau salah, muncul pesan error dan berkas tidak terbuka.
+4. PDF itu sendiri **tidak dienkripsi/dikunci** -- ini murni gerbang di sisi tampilan website.
 
-**Mengganti/menambah password cabang:** edit file `assets/branch-config.js` di GitHub, ubah nilai di object `BRANCH_PASSWORDS`, lalu Commit changes. Tidak perlu ubah file lain.
+## Cara Kerja Password Otorisasi Admin
 
-**Mengganti password akses form (`pajak123`):** ubah nilai `SUBMIT_GATE_PASSWORD` di file yang sama.
+Saat admin klik **Verifikasi** pada suatu baris di `tracking.html`, sebelum bisa klik **Simpan**, admin wajib mengisi kolom **Password Otorisasi Admin**. Password ini sama untuk semua admin (bukan per orang), disimpan di `assets/branch-config.js` sebagai `SUBMIT_GATE_PASSWORD`.
+
+**Mengganti password otorisasi admin:** edit file `assets/branch-config.js` di GitHub, ubah nilai `SUBMIT_GATE_PASSWORD`, lalu Commit changes.
+
+**Mengganti password otorisasi admin (`pajak123`):** ubah nilai `SUBMIT_GATE_PASSWORD` di `assets/branch-config.js`. Password ini wajib dimasukkan admin setiap kali menyimpan hasil verifikasi (approve/reject) di tracking.html.
 
 ## Daftar Kode Cabang yang Terdaftar
 
 DLR, DLY, DLP, DMP, DLA, DLQ, DLO, DMR, DLF, DLH, DLB, DLV, DLE, DLJ, DMN, DLS, DLX, DLZ, DLI, DMM, DLK, DLU, DLG, DLW, DLN, DLM, DLT, DLD, DMK, MML, MMM, MMT
 
-Untuk menambah/menghapus cabang, edit `BRANCH_LIST` dan `BRANCH_PASSWORDS` di `assets/branch-config.js` (harus konsisten, satu kode harus ada di kedua tempat).
+Untuk menambah/menghapus cabang, edit `BRANCH_LIST` di `assets/branch-config.js`.
 
 ---
 
