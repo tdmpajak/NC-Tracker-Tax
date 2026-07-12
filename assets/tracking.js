@@ -134,20 +134,26 @@ function renderTable() {
   tableBody.innerHTML = rows.map(r => `
     <tr>
       <td><span class="badge-cabang">${escapeHtml(r['Cabang'] || '-')}</span></td>
-      <td class="cell-pic">
-        ${r['No Telpon']
-          ? `<a class="name name-truncate" href="${toWaLink(r['No Telpon'])}" target="_blank" title="${escapeHtml(r['Nama PIC'] || '')}" style="color:var(--success); text-decoration:none;">💬 ${escapeHtml(r['Nama PIC'] || '-')}</a>`
-          : `<span class="name name-truncate" title="${escapeHtml(r['Nama PIC'] || '')}">${escapeHtml(r['Nama PIC'] || '-')}</span>`}
+      <td>
+        <div class="cell-pic">
+          ${r['No Telpon']
+            ? `<a class="name name-truncate" href="${toWaLink(r['No Telpon'])}" target="_blank" title="${escapeHtml(r['Nama PIC'] || '')}" style="color:var(--success); text-decoration:none;">💬 ${escapeHtml(r['Nama PIC'] || '-')}</a>`
+            : `<span class="name name-truncate" title="${escapeHtml(r['Nama PIC'] || '')}">${escapeHtml(r['Nama PIC'] || '-')}</span>`}
+        </div>
       </td>
       <td class="cell-nc" title="${escapeHtml((r['No Payment Request'] || '').replace(/\n/g, ', '))}">${escapeHtml((r['No Payment Request'] || '-').split('\n')[0])}${r['No Payment Request'] && r['No Payment Request'].includes('\n') ? ' …' : ''}</td>
-      <td class="cell-pic">
-        ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
-        <span class="phone">${formatDate(r['Timestamp Kirim'])}</span>
+      <td>
+        <div class="cell-pic">
+          ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
+          <span class="phone">${formatDate(r['Timestamp Kirim'])}</span>
+        </div>
       </td>
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
-      <td class="cell-pic">
-        ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : '<span style="color:var(--ink-soft);">–</span>'}
-        ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
+      <td>
+        <div class="cell-pic">
+          ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : '<span style="color:var(--ink-soft);">–</span>'}
+          ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
+        </div>
       </td>
       <td>${r['Status'] === 'Menunggu Verifikasi'
           ? `<button class="btn btn-primary btn-sm" data-id="${r['ID']}">Verifikasi</button>`
@@ -155,6 +161,7 @@ function renderTable() {
       </td>
     </tr>
   `).join('');
+
 
   tableBody.querySelectorAll('button[data-id]').forEach(btn => {
     btn.addEventListener('click', () => openModal(btn.dataset.id));
