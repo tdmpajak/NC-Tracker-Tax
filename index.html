@@ -30,9 +30,8 @@
 
         <div class="field required">
           <label for="cabang">Cabang</label>
-          <select id="cabang" required>
-            <option value="" disabled selected>Pilih kode cabang</option>
-          </select>
+          <input type="text" id="cabang" list="cabangDatalist" placeholder="Ketik atau pilih kode cabang" autocomplete="off" required>
+          <datalist id="cabangDatalist"></datalist>
         </div>
 
         <div class="field required">
