@@ -160,28 +160,39 @@ function listData() {
   return { success: true, data: rows };
 }
 
+// Dioptimalkan untuk kecepatan: (1) hanya membaca kolom ID saja untuk mencari baris
+// (bukan seluruh kolom -- lebih sedikit data yang perlu ditransfer), dan (2) menulis
+// ke 5 kolom sekaligus dalam SATU panggilan setValues() (bukan 5 panggilan terpisah).
 function verifyData(body) {
   const sheet = getSheet();
-  const data = sheet.getDataRange().getValues();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: false, error: 'ID tidak ditemukan' };
 
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === body.id) {
-      const rowNum = i + 1;
-      let fileUrl = '';
-
-      if (body.fileData) {
-        const folder = getFolder(FOLDER_VERIFIKASI_NAME);
-        fileUrl = saveFile(folder, body.fileName, body.fileData, body.id);
-      }
-
-      sheet.getRange(rowNum, 9).setValue(body.status || 'Terverifikasi');       // Status
-      if (fileUrl) sheet.getRange(rowNum, 10).setValue(fileUrl);                 // File Hasil Verifikasi
-      sheet.getRange(rowNum, 11).setValue(new Date());                          // Tanggal Verifikasi
-      sheet.getRange(rowNum, 12).setValue(body.admin || '');                    // Admin Verifikator
-      sheet.getRange(rowNum, 13).setValue(body.catatan || '');                  // Catatan Admin
-
-      return { success: true };
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  let rowNum = -1;
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === body.id) {
+      rowNum = i + 2;
+      break;
     }
   }
-  return { success: false, error: 'ID tidak ditemukan' };
+  if (rowNum === -1) return { success: false, error: 'ID tidak ditemukan' };
+
+  let fileUrl = '';
+  if (body.fileData) {
+    const folder = getFolder(FOLDER_VERIFIKASI_NAME);
+    fileUrl = saveFile(folder, body.fileName, body.fileData, body.id);
+  }
+  // Kalau tidak ada file baru diunggah, pertahankan link yang sudah ada sebelumnya (kalau ada).
+  const finalFileUrl = fileUrl || sheet.getRange(rowNum, 10).getValue();
+
+  sheet.getRange(rowNum, 9, 1, 5).setValues([[
+    body.status || 'Terverifikasi',   // Status
+    finalFileUrl,                      // File Hasil Verifikasi
+    new Date(),                        // Tanggal Verifikasi
+    body.admin || '',                  // Admin Verifikator
+    body.catatan || '',                // Catatan Admin
+  ]]);
+
+  return { success: true };
 }
