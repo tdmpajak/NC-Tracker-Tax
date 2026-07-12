@@ -140,14 +140,12 @@ function renderTable() {
       </td>
       <td class="cell-nc">${escapeHtml(r['No Payment Request'] || '-')}</td>
       <td class="cell-pic">
-        ${r['File Berkas'] && !r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : ''}
-        ${r['File Berkas'] && r['File Hasil Verifikasi'] ? `<span style="color:var(--ink-soft); font-size:12.5px;">Sudah diverifikasi</span>` : ''}
-        ${!r['File Berkas'] ? '<span style="color:var(--ink-soft);">–</span>' : ''}
+        ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
         <span class="phone">${formatDate(r['Timestamp Kirim'])}</span>
       </td>
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
       <td class="cell-pic">
-        ${r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button>` : '<span style="color:var(--ink-soft);">–</span>'}
+        ${r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button> · <button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button>` : '<span style="color:var(--ink-soft);">–</span>'}
         ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
       </td>
       <td>${r['Status'] === 'Menunggu Verifikasi'
@@ -162,7 +160,13 @@ function renderTable() {
   });
 
   tableBody.querySelectorAll('button.link-inline-btn').forEach(btn => {
-    btn.addEventListener('click', () => openProtectedLink(btn.dataset.url, btn.dataset.docid));
+    btn.addEventListener('click', () => {
+      if (btn.dataset.downloadUrl) {
+        openProtectedLink(toDriveDownloadLink(btn.dataset.downloadUrl), btn.dataset.docid);
+      } else {
+        openProtectedLink(btn.dataset.url, btn.dataset.docid);
+      }
+    });
   });
 }
 
@@ -177,6 +181,17 @@ function openProtectedLink(url, correctId) {
   } else {
     alert('ID pengajuan salah.');
   }
+}
+
+// Ubah link "lihat" Google Drive biasa jadi link download langsung
+// (drive.google.com/file/d/ID/view -> drive.google.com/uc?export=download&id=ID).
+// Kalau pola link-nya tidak dikenali, pakai link asli saja sebagai fallback.
+function toDriveDownloadLink(url) {
+  const match = String(url).match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+  }
+  return url;
 }
 
 // Membuka link di tab baru dengan cara yang lebih andal daripada window.open()
@@ -231,6 +246,12 @@ function closeModal() {
   isModalOpen = false;
 }
 modalCancel.addEventListener('click', closeModal);
+modalAuthPassword.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    modalSubmit.click();
+  }
+});
 modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
 
 // Catatan: input file sudah di dalam <label>, klik label otomatis buka dialog file.
