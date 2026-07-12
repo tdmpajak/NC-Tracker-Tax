@@ -34,10 +34,26 @@ function getSheet() {
   return sheet;
 }
 
+// Dicache pakai Script Properties supaya tidak perlu mencari folder by name
+// setiap kali ada pengiriman (pencarian folder di Drive itu salah satu bagian
+// yang cukup lambat) -- mempercepat proses kirim berkas secara signifikan.
 function getFolder(name) {
+  const props = PropertiesService.getScriptProperties();
+  const cacheKey = 'FOLDER_ID_' + name;
+  const cachedId = props.getProperty(cacheKey);
+
+  if (cachedId) {
+    try {
+      return DriveApp.getFolderById(cachedId);
+    } catch (e) {
+      // Folder mungkin sudah dihapus manual dari Drive, lanjut cari/buat ulang di bawah.
+    }
+  }
+
   const folders = DriveApp.getFoldersByName(name);
-  if (folders.hasNext()) return folders.next();
-  return DriveApp.createFolder(name);
+  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
+  props.setProperty(cacheKey, folder.getId());
+  return folder;
 }
 
 function jsonResponse(obj) {
