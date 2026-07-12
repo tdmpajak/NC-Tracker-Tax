@@ -135,8 +135,9 @@ function renderTable() {
     <tr>
       <td><span class="badge-cabang">${escapeHtml(r['Cabang'] || '-')}</span></td>
       <td class="cell-pic">
-        <span class="name">${escapeHtml(r['Nama PIC'] || '-')}</span>
-        ${r['No Telpon'] ? `<a class="phone" href="${toWaLink(r['No Telpon'])}" target="_blank" style="color:var(--success); text-decoration:none;">💬 ${escapeHtml(r['No Telpon'])}</a>` : ''}
+        ${r['No Telpon']
+          ? `<a class="name" href="${toWaLink(r['No Telpon'])}" target="_blank" style="color:var(--success); text-decoration:none;">💬 ${escapeHtml(r['Nama PIC'] || '-')}</a>`
+          : `<span class="name">${escapeHtml(r['Nama PIC'] || '-')}</span>`}
       </td>
       <td class="cell-nc">${escapeHtml(r['No Payment Request'] || '-')}</td>
       <td class="cell-pic">
