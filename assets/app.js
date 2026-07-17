@@ -7,6 +7,7 @@ const fileInput = document.getElementById('fileInput');
 const dzText = document.getElementById('dzText');
 const submitBtn = document.getElementById('submitBtn');
 const statusMsg = document.getElementById('statusMsg');
+const submitResultBox = document.getElementById('submitResultBox');
 
 let selectedFile = null;
 
@@ -67,11 +68,17 @@ function fileToBase64(file) {
   });
 }
 
+function escapeHtmlApp(str) {
+  return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
 // ---------- Submit ----------
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   statusMsg.textContent = '';
   statusMsg.className = 'status-msg';
+  submitResultBox.style.display = 'none';
+  submitResultBox.innerHTML = '';
 
   const cabang = cabangInput.value.trim().toUpperCase();
   const namaPic = document.getElementById('namaPic').value.trim();
@@ -150,8 +157,19 @@ form.addEventListener('submit', async (e) => {
     const result = await res.json();
 
     if (result.success) {
-      statusMsg.textContent = `Berhasil dikirim. ID: ${result.id}`;
-      statusMsg.classList.add('ok');
+      statusMsg.textContent = '';
+      statusMsg.className = 'status-msg';
+      submitResultBox.style.display = 'block';
+      submitResultBox.innerHTML = `
+        <div style="background:var(--success-soft); border:1px solid #B7E0C8; border-radius:10px; padding:16px 18px; margin-top:14px;">
+          <div style="font-size:13.5px; color:var(--success); font-weight:700; margin-bottom:10px;">✓ Berkas berhasil dikirim!</div>
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">ID Pengajuan Anda:</div>
+          <div style="font-size:24px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:var(--primary-dark); letter-spacing:0.02em; user-select:all; word-break:break-all;">${escapeHtmlApp(result.id)}</div>
+          <div style="font-size:12.5px; color:var(--ink-soft); margin-top:12px; line-height:1.5;">
+            ⚠️ <strong>Penting — simpan/catat ID ini baik-baik.</strong> Nanti di halaman <strong>Tracking & Verifikasi</strong>, ID ini dibutuhkan sebagai "kunci" untuk membuka berkas PDF Anda (baik berkas asli maupun hasil verifikasinya). Tanpa ID ini, berkas tidak bisa dibuka.
+          </div>
+        </div>
+      `;
       form.reset();
       dzText.innerHTML = '<strong>Klik untuk pilih file</strong> atau seret PDF ke sini';
       selectedFile = null;
