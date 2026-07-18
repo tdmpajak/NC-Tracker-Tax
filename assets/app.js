@@ -173,6 +173,8 @@ form.addEventListener('submit', async (e) => {
       form.reset();
       dzText.innerHTML = '<strong>Klik untuk pilih file</strong> atau seret PDF ke sini';
       selectedFile = null;
+      // Auto-scroll supaya notifikasi ID pengajuan pasti terlihat, tidak perlu scroll manual.
+      submitResultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       throw new Error(result.error || 'Gagal mengirim data.');
     }
