@@ -151,13 +151,14 @@ function renderTable() {
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
       <td>
         <div class="cell-pic">
-          ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : '<span style="color:var(--ink-soft);">–</span>'}
+          ${r['Catatan Admin'] ? `<div style="background:var(--accent-soft); color:var(--accent); border-radius:6px; padding:5px 8px; font-size:12px; line-height:1.4; margin-bottom:4px;">📝 ${escapeHtml(r['Catatan Admin'])}</div>` : ''}
+          ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : (r['Catatan Admin'] ? '' : '<span style="color:var(--ink-soft);">–</span>')}
           ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
         </div>
       </td>
       <td>${r['Status'] === 'Menunggu Verifikasi'
-          ? `<button class="btn btn-primary btn-sm" data-id="${r['ID']}">Verifikasi</button>`
-          : `<button class="btn btn-ghost btn-sm" data-id="${r['ID']}">Ubah</button>`}
+          ? `<button class="btn btn-primary btn-sm" data-id="${r['ID']}" title="Khusus tim pajak">Verifikasi</button>`
+          : `<button class="btn btn-ghost btn-sm" data-id="${r['ID']}" title="Khusus tim pajak">Ubah</button>`}
       </td>
     </tr>
   `).join('');
