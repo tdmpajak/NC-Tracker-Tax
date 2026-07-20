@@ -19,7 +19,7 @@
 
 // Urutan cabang yang muncul di dropdown form kirim berkas
 const BRANCH_LIST = [
-  'DLR','DLY','DLP','DMP','DLA','DLQ','DLO','DMR','DLF','DLH','DLB','DLV','DLE','DLJ','DMN',
+  'DLR','DLL','DLY','DLP','DMP','DLA','DLQ','DLO','DMR','DLF','DLH','DLB','DLV','DLE','DLJ','DMN',
   'DLS','DLX','DLZ','DLI','DMM','DLK','DLU','DLG','DLW','DLN','DLM','DLT','DLD','DMK','MML','MMM','MMT','HHO'
 ];
 
