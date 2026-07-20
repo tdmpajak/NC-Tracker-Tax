@@ -132,7 +132,7 @@ Saat admin klik **Verifikasi** pada suatu baris di `tracking.html`, sebelum bisa
 
 ## Daftar Kode Cabang yang Terdaftar
 
-DLR, DLY, DLP, DMP, DLA, DLQ, DLO, DMR, DLF, DLH, DLB, DLV, DLE, DLJ, DMN, DLS, DLX, DLZ, DLI, DMM, DLK, DLU, DLG, DLW, DLN, DLM, DLT, DLD, DMK, MML, MMM, MMT
+HHO, DLR, DLY, DLP, DMP, DLA, DLQ, DLO, DMR, DLF, DLH, DLB, DLV, DLE, DLJ, DMN, DLS, DLX, DLZ, DLI, DMM, DLK, DLU, DLG, DLW, DLN, DLM, DLT, DLD, DMK, MML, MMM, MMT
 
 Untuk menambah/menghapus cabang, edit `BRANCH_LIST` di `assets/branch-config.js`.
 
