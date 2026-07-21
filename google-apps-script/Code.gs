@@ -17,6 +17,13 @@ const SHEET_NAME = 'Tracking';
 const FOLDER_MASUK_NAME = 'Berkas Masuk - Payment Request';
 const FOLDER_VERIFIKASI_NAME = 'Berkas Terverifikasi - Payment Request';
 
+// Password otorisasi admin -- SEKARANG divalidasi di server (bukan cuma di tampilan
+// tracking.js/NC Verifier), supaya panggilan langsung ke Apps Script (tanpa lewat
+// website sama sekali) tetap wajib menyertakan password yang benar.
+// PENTING: ganti nilai ini kalau password di assets/branch-config.js (NC Tracker)
+// diubah -- keduanya harus SAMA PERSIS.
+const ADMIN_AUTH_PASSWORD = 'pjk123';
+
 const HEADERS = [
   'ID', 'Timestamp Kirim', 'Cabang', 'Nama PIC', 'No Telpon',
   'No Payment Request', 'Link Payment Request', 'File Berkas', 'Status',
@@ -74,6 +81,7 @@ function doPost(e) {
     if (action === 'submit') return jsonResponse(submitData(body));
     if (action === 'verify') return jsonResponse(verifyData(body));
     if (action === 'list') return jsonResponse(listData());
+    if (action === 'getFile') return jsonResponse(getFileData(body));
     return jsonResponse({ success: false, error: 'Unknown action: ' + action });
   } catch (err) {
     return jsonResponse({ success: false, error: err.message });
@@ -121,6 +129,58 @@ function generateId(sheet) {
   return 'NCT-' + seqPadded + '/' + dateStr + '-' + rand;
 }
 
+// Mengambil ID file Google Drive dari sebuah URL Drive standar
+// (https://drive.google.com/file/d/FILE_ID/view -> FILE_ID)
+function extractDriveFileId(url) {
+  const match = String(url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+// Dipakai oleh NC Verifier: ambil isi berkas PDF (base64) + data pengajuan
+// berdasarkan ID, supaya berkas bisa otomatis dimuat tanpa unduh/upload manual.
+// Mengutamakan "File Berkas" (berkas asli) kalau masih Menunggu Verifikasi;
+// kalau statusnya sudah Terverifikasi/Ditolak dan ada hasil verifikasi, itu
+// yang diprioritaskan (dokumen paling akhir/final).
+function getFileData(body) {
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: false, error: 'ID tidak ditemukan' };
+  const headers = data[0];
+  const idCol = headers.indexOf('ID');
+  const fileBerkasCol = headers.indexOf('File Berkas');
+  const fileHasilCol = headers.indexOf('File Hasil Verifikasi');
+  const statusCol = headers.indexOf('Status');
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idCol] !== body.id) continue;
+
+    const row = data[i];
+    const useHasil = row[statusCol] !== 'Menunggu Verifikasi' && row[fileHasilCol];
+    const sourceUrl = useHasil ? row[fileHasilCol] : row[fileBerkasCol];
+    const driveId = extractDriveFileId(sourceUrl);
+    if (!driveId) return { success: false, error: 'Berkas tidak ditemukan di Drive' };
+
+    const file = DriveApp.getFileById(driveId);
+    const blob = file.getBlob();
+    const base64 = 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes());
+
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = row[idx] instanceof Date ? row[idx].toISOString() : row[idx]; });
+
+    return {
+      success: true,
+      id: body.id,
+      cabang: obj['Cabang'],
+      namaPic: obj['Nama PIC'],
+      noPaymentRequest: obj['No Payment Request'],
+      status: obj['Status'],
+      fileName: file.getName(),
+      fileData: base64,
+    };
+  }
+  return { success: false, error: 'ID tidak ditemukan' };
+}
+
 function submitData(body) {
   const sheet = getSheet();
   const id = generateId(sheet);
@@ -164,6 +224,13 @@ function listData() {
 // (bukan seluruh kolom -- lebih sedikit data yang perlu ditransfer), dan (2) menulis
 // ke 5 kolom sekaligus dalam SATU panggilan setValues() (bukan 5 panggilan terpisah).
 function verifyData(body) {
+  // PENTING: validasi password di SERVER, bukan cuma di tampilan (tracking.js/NC
+  // Verifier) -- supaya panggilan langsung ke Apps Script (lewat luar website)
+  // tetap wajib menyertakan password otorisasi yang benar.
+  if (body.authPassword !== ADMIN_AUTH_PASSWORD) {
+    return { success: false, error: 'Password otorisasi salah.' };
+  }
+
   const sheet = getSheet();
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return { success: false, error: 'ID tidak ditemukan' };
