@@ -24,4 +24,4 @@ const BRANCH_LIST = [
 ];
 
 // Password otorisasi admin saat menyimpan hasil verifikasi di tracking.html
-const SUBMIT_GATE_PASSWORD = 'pajak123';
+const SUBMIT_GATE_PASSWORD = 'pjk123';
