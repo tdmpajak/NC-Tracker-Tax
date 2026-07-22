@@ -151,7 +151,8 @@ function renderTable() {
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
       <td>
         <div class="cell-pic">
-          ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : '<span style="color:var(--ink-soft);">–</span>'}
+          ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : (r['Catatan Admin'] ? '' : '<span style="color:var(--ink-soft);">–</span>')}
+          ${r['Catatan Admin'] ? `<div style="display:flex; gap:5px; align-items:flex-start; font-size:12px; color:var(--ink-soft); line-height:1.4;"><span>📝</span><span>${escapeHtml(r['Catatan Admin'])}</span></div>` : ''}
           ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
         </div>
       </td>
