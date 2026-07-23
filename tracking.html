@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tracking &amp; Verifikasi — NC Tracker Tax</title>
+<title>Tracking &amp; Verifikasi — Doc Tracker Tax</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="brand"><span class="brand-mark">NC</span> Tracker Tax</div>
+    <div class="brand"><span class="brand-mark">Doc</span> Tracker Tax</div>
     <nav class="nav-tabs">
       <a href="index.html">Kirim Berkas</a>
       <a href="tracking.html" class="active">Tracking &amp; Verifikasi</a>
@@ -18,52 +18,61 @@
   </div>
 </div>
 
-<div class="wrap">
+<div class="wrap wrap-wide">
   <div class="page-head">
     <h1>Tracking &amp; Verifikasi Berkas</h1>
-    <p>Pantau seluruh pengajuan dari cabang, lalu unggah berkas yang sudah ditandatangani/diverifikasi.</p>
-    <p style="font-size:13px; color:var(--ink-soft); margin-top:2px;">Kolom Aksi hanya dapat digunakan oleh tim pajak.</p>
+    <p>Pantau seluruh pengajuan dari cabang, per jenis dokumen. Ubah/verifikasi status dilakukan lewat aplikasi <strong>NC Verifier</strong>, bukan di halaman ini.</p>
   </div>
 
-  <div class="stat-row" id="statRow">
-    <div class="stat-card"><div class="num" id="statTotal">–</div><div class="label">Total Pengajuan</div></div>
-    <div class="stat-card"><div class="num" id="statPending">–</div><div class="label">Menunggu Verifikasi</div></div>
-    <div class="stat-card"><div class="num" id="statVerified">–</div><div class="label">Terverifikasi</div></div>
-    <div class="stat-card"><div class="num" id="statRejected">–</div><div class="label">Ditolak</div></div>
-  </div>
+  <div class="dash-wrap">
+    <aside class="dash-sidebar" id="dashSidebar">
+      <div class="dash-sidebar-title">Jenis Dokumen</div>
+      <button class="dash-menu-item active" data-jenis="NC - Aktual">NC - Aktual</button>
+      <button class="dash-menu-item" data-jenis="Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)">Non NC - Aktual<span class="sub-label">PO, KPB, DN, Dokumen Lainnya</span></button>
+      <button class="dash-menu-item" data-jenis="LPJ">LPJ</button>
+    </aside>
 
-  <div class="toolbar">
-    <div class="search-box">
-      <span>🔎</span>
-      <input type="text" id="searchInput" placeholder="Cari cabang, PIC, atau nomor NC…">
+    <div class="dash-content">
+      <div class="stat-row" id="statRow">
+        <div class="stat-card"><div class="num" id="statTotal">–</div><div class="label">Total Pengajuan</div></div>
+        <div class="stat-card"><div class="num" id="statPending">–</div><div class="label">Menunggu Verifikasi</div></div>
+        <div class="stat-card"><div class="num" id="statVerified">–</div><div class="label">Terverifikasi</div></div>
+        <div class="stat-card"><div class="num" id="statRejected">–</div><div class="label">Ditolak</div></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <span>🔎</span>
+          <input type="text" id="searchInput" placeholder="Cari cabang, PIC, atau nomor dokumen…">
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+          <button data-filter="all" class="active">Semua</button>
+          <button data-filter="Menunggu Verifikasi">Menunggu</button>
+          <button data-filter="Terverifikasi">Terverifikasi</button>
+          <button data-filter="Ditolak">Ditolak</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Muat Ulang</button>
+        <span id="lastUpdated" style="font-size:12px; color:var(--ink-soft); white-space:nowrap;"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cabang</th>
+              <th>PIC Pengaju</th>
+              <th>No. Dokumen</th>
+              <th>Pengajuan</th>
+              <th>Status</th>
+              <th>Hasil Verifikasi</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="6" class="empty-state">Memuat data…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="filter-tabs" id="filterTabs">
-      <button data-filter="all" class="active">Semua</button>
-      <button data-filter="Menunggu Verifikasi">Menunggu</button>
-      <button data-filter="Terverifikasi">Terverifikasi</button>
-      <button data-filter="Ditolak">Ditolak</button>
-    </div>
-    <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Muat Ulang</button>
-    <span id="lastUpdated" style="font-size:12px; color:var(--ink-soft); white-space:nowrap;"></span>
-  </div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Cabang</th>
-          <th>PIC Pengaju</th>
-          <th>No. Payment Request</th>
-          <th>Pengajuan</th>
-          <th>Status</th>
-          <th>Hasil Verifikasi</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="7" class="empty-state">Memuat data…</td></tr>
-      </tbody>
-    </table>
   </div>
 
   <div class="foot-bar">
@@ -72,57 +81,6 @@
     <span>Butuh bantuan?</span>
     <a href="https://wa.me/6285709631983" target="_blank" class="foot-bar-link">💬 Widi</a>
     <a href="https://wa.me/628996423769" target="_blank" class="foot-bar-link">💬 Gita</a>
-  </div>
-</div>
-
-<!-- Modal verifikasi -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <h3>Verifikasi Berkas</h3>
-    <p class="sub" id="modalSub">Unggah berkas yang sudah ditandatangani/diverifikasi.</p>
-
-    <div class="field" style="margin-bottom:14px;">
-      <label>Keputusan</label>
-      <select id="modalStatus">
-        <option value="Terverifikasi">Terverifikasi</option>
-        <option value="Ditolak">Ditolak</option>
-      </select>
-    </div>
-
-    <div class="field" style="margin-bottom:14px;">
-      <label>Nama Admin Verifikator</label>
-      <select id="modalAdmin">
-        <option value="" disabled selected>Pilih admin</option>
-        <option value="Widi">Widi</option>
-        <option value="Gita">Gita</option>
-      </select>
-    </div>
-
-    <div class="field" style="margin-bottom:14px;">
-      <label>Catatan (opsional)</label>
-      <input type="text" id="modalCatatan" placeholder="Catatan tambahan">
-    </div>
-
-    <div class="field">
-      <label>Berkas Hasil Verifikasi (PDF)</label>
-      <div class="hint" style="margin-bottom:2px;">Untuk membuka/mengunduh berkas PDF di tabel tracking akan diminta password cabang terkait.</div>
-      <label class="dropzone" id="modalDropzone" style="padding:16px;">
-        <input type="file" id="modalFileInput" accept="application/pdf">
-        <div class="dz-text" id="modalDzText"><strong>Klik untuk pilih file</strong> (opsional jika hanya menolak)</div>
-      </label>
-    </div>
-
-    <div class="field" style="margin-bottom:14px;">
-      <label>Password Otorisasi Admin</label>
-      <div class="hint" style="margin-bottom:2px;">Wajib diisi untuk menyimpan hasil verifikasi.</div>
-      <input type="password" id="modalAuthPassword" placeholder="Password otorisasi" autocomplete="off">
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-sm" id="modalCancel">Batal</button>
-      <button class="btn btn-primary btn-sm" id="modalSubmit">Simpan</button>
-    </div>
-    <div class="status-msg" id="modalMsg" style="margin-top:10px;"></div>
   </div>
 </div>
 
