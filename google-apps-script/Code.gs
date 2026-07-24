@@ -1,5 +1,5 @@
 /**
- * LOGBOOK VERIFIKASI PAJAK - PAYMENT REQUEST (NC)
+ * DOC TRACKER TAX - VERIFIKASI BERKAS (NC / NON NC / LPJ)
  * Backend Google Apps Script
  *
  * CARA DEPLOY:
@@ -9,24 +9,22 @@
  *    - Type: Web app
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 4. Copy URL Web App yang muncul, tempel ke assets/app.js (API_URL) dan assets/tracking.js
+ * 4. Copy URL Web App yang muncul, tempel ke assets/config.js (API_URL) dan
+ *    ke config.js milik NC Verifier (TRACKER_API_URL)
  * 5. Setiap kali edit script, klik Deploy > Manage deployments > Edit > New version
  */
 
 const SHEET_NAME = 'Tracking';
-const FOLDER_MASUK_NAME = 'Berkas Masuk - Payment Request';
-const FOLDER_VERIFIKASI_NAME = 'Berkas Terverifikasi - Payment Request';
+const FOLDER_MASUK_NAME = 'Berkas Masuk - Dokumen';
+const FOLDER_VERIFIKASI_NAME = 'Berkas Terverifikasi - Dokumen';
 
-// Password otorisasi admin -- SEKARANG divalidasi di server (bukan cuma di tampilan
-// tracking.js/NC Verifier), supaya panggilan langsung ke Apps Script (tanpa lewat
-// website sama sekali) tetap wajib menyertakan password yang benar.
-// PENTING: ganti nilai ini kalau password di assets/branch-config.js (NC Tracker)
-// diubah -- keduanya harus SAMA PERSIS.
-const ADMIN_AUTH_PASSWORD = 'pjk123';
+// CATATAN: Penyimpanan/verifikasi berkas TIDAK lagi memakai password otorisasi.
+// Menu "ubah/verifikasi" hanya bisa diakses lewat aplikasi NC Verifier (bukan
+// dari form cabang/PIC), jadi sudah aman tanpa kode tambahan di langkah ini.
 
 const HEADERS = [
   'ID', 'Timestamp Kirim', 'Cabang', 'Nama PIC', 'No Telpon',
-  'No Payment Request', 'Link Payment Request', 'File Berkas', 'Status',
+  'Jenis Dokumen', 'No Dokumen', 'File Berkas', 'Status',
   'File Hasil Verifikasi', 'Tanggal Verifikasi', 'Admin Verifikator', 'Catatan Admin'
 ];
 
@@ -99,8 +97,8 @@ function saveFile(folder, fileName, base64Data, prefix) {
   return file.getUrl();
 }
 
-// Membuat nomor ID tersistem, format: NCT-0007/050726-K3M9
-// - "NCT" = kode sistem (NC Tracker Tax)
+// Membuat nomor ID tersistem, format: DTT-0007/050726-K3M9
+// - "DTT" = kode sistem (Doc Tracker Tax)
 // - "0007" = nomor urut dokumen (urutan ke berapa sejak sistem dipakai, 4 digit)
 // - "050726" = tanggal dokumen dikirim, format DDMMYY (5 Juli 2026)
 // - "K3M9" = kode acak 4 karakter -- supaya ID ini TIDAK bisa ditebak orang lain
@@ -126,7 +124,7 @@ function generateId(sheet) {
   const seqPadded = pad(seq, 4);
   const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'ddMMyy');
   const rand = randomCode(4);
-  return 'NCT-' + seqPadded + '/' + dateStr + '-' + rand;
+  return 'DTT-' + seqPadded + '/' + dateStr + '-' + rand;
 }
 
 // Mengambil ID file Google Drive dari sebuah URL Drive standar
@@ -172,8 +170,11 @@ function getFileData(body) {
       id: body.id,
       cabang: obj['Cabang'],
       namaPic: obj['Nama PIC'],
-      noPaymentRequest: obj['No Payment Request'],
+      jenisDokumen: obj['Jenis Dokumen'],
+      noDokumen: obj['No Dokumen'],
       status: obj['Status'],
+      catatanAdmin: obj['Catatan Admin'],
+      adminVerifikator: obj['Admin Verifikator'],
       fileName: file.getName(),
       fileData: base64,
     };
@@ -181,7 +182,31 @@ function getFileData(body) {
   return { success: false, error: 'ID tidak ditemukan' };
 }
 
+// Daftar Jenis Dokumen yang valid -- HARUS sama persis dengan pilihan di
+// dropdown index.html. Dipakai untuk menolak submit yang jenisDokumen-nya
+// kosong/tidak sesuai (mis. dikirim dari form versi lama/cache browser yang
+// belum punya field ini), supaya tidak ada lagi baris "tersembunyi" yang
+// tidak muncul di dashboard manapun karena kolom Jenis Dokumen kosong.
+const VALID_JENIS_DOKUMEN = [
+  'NC - Aktual',
+  'Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)',
+  'LPJ'
+];
+
 function submitData(body) {
+  const jenisDokumen = String(body.jenisDokumen || '').trim();
+  const noDokumen = String(body.noDokumen || '').trim();
+
+  if (VALID_JENIS_DOKUMEN.indexOf(jenisDokumen) === -1) {
+    return {
+      success: false,
+      error: 'Jenis Dokumen tidak valid atau belum dipilih. Coba hard refresh halaman form (Ctrl+Shift+R / buka di jendela Incognito) lalu kirim ulang -- kemungkinan browser Anda masih memakai versi form yang lama.'
+    };
+  }
+  if (!noDokumen) {
+    return { success: false, error: 'No. Dokumen wajib diisi.' };
+  }
+
   const sheet = getSheet();
   const id = generateId(sheet);
   const folder = getFolder(FOLDER_MASUK_NAME);
@@ -193,8 +218,8 @@ function submitData(body) {
     body.cabang || '',
     body.namaPic || '',
     body.noTelpon || '',
-    body.noPaymentRequest || '',
-    body.linkPaymentRequest || '',
+    jenisDokumen,
+    noDokumen,
     fileUrl,
     'Menunggu Verifikasi',
     '', '', '', ''
@@ -224,13 +249,9 @@ function listData() {
 // (bukan seluruh kolom -- lebih sedikit data yang perlu ditransfer), dan (2) menulis
 // ke 5 kolom sekaligus dalam SATU panggilan setValues() (bukan 5 panggilan terpisah).
 function verifyData(body) {
-  // PENTING: validasi password di SERVER, bukan cuma di tampilan (tracking.js/NC
-  // Verifier) -- supaya panggilan langsung ke Apps Script (lewat luar website)
-  // tetap wajib menyertakan password otorisasi yang benar.
-  if (body.authPassword !== ADMIN_AUTH_PASSWORD) {
-    return { success: false, error: 'Password otorisasi salah.' };
-  }
-
+  // Tidak ada lagi validasi password di sini -- menu verifikasi hanya bisa
+  // diakses lewat aplikasi NC Verifier (bukan dari form cabang/PIC), jadi
+  // sudah aman tanpa kode tambahan.
   const sheet = getSheet();
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return { success: false, error: 'ID tidak ditemukan' };
@@ -262,4 +283,117 @@ function verifyData(body) {
   ]]);
 
   return { success: true };
+}
+
+// =====================================================================
+// MIGRASI DATA LAMA (NC Tracker Tax -> Doc Tracker Tax) -- JALANKAN SEKALI SAJA
+// =====================================================================
+// Struktur sheet lama:
+//   ID, Timestamp Kirim, Cabang, Nama PIC, No Telpon,
+//   No Payment Request, Link Payment Request, File Berkas, Status,
+//   File Hasil Verifikasi, Tanggal Verifikasi, Admin Verifikator, Catatan Admin
+//
+// Struktur sheet baru (dipakai kode di atas):
+//   ID, Timestamp Kirim, Cabang, Nama PIC, No Telpon,
+//   Jenis Dokumen, No Dokumen, File Berkas, Status,
+//   File Hasil Verifikasi, Tanggal Verifikasi, Admin Verifikator, Catatan Admin
+//
+// Fungsi ini: (1) menyisipkan kolom baru "Jenis Dokumen" di posisi F (sebelum
+// kolom nomor dokumen), (2) mengisi semua baris data yang SUDAH ADA dengan
+// "NC - Aktual" (karena sistem lama memang khusus Payment Request/NC),
+// (3) mengganti nama header "No Payment Request" -> "No Dokumen", dan
+// (4) MENGHAPUS kolom "Link Payment Request" -- field ini sudah tidak dipakai
+// lagi di Doc Tracker Tax.
+//
+// CARA PAKAI:
+// 1. Buka Apps Script project yang SEDANG DIPAKAI SEKARANG (yang isinya masih
+//    versi lama), tempel/tambahkan fungsi migrateToDocTracker() ini saja
+//    dulu ke Code.gs yang lama (jangan timpa semuanya dulu).
+// 2. Di toolbar Apps Script, pilih fungsi "migrateToDocTracker" dari dropdown
+//    di sebelah tombol Run (ikon play ▶), lalu klik Run.
+// 3. Kalau diminta izin, klik Authorize/Izinkan seperti biasa.
+// 4. Cek log (View > Logs / Ctrl+Enter) dan cek langsung Google Sheet-nya --
+//    pastikan kolom "Jenis Dokumen" sudah muncul dan terisi "NC - Aktual" di
+//    semua baris lama, dan kolom "Link Payment Request" sudah terhapus.
+// 5. SETELAH migrasi berhasil, baru timpa SELURUH isi Code.gs dengan isi file
+//    ini (versi Doc Tracker Tax yang baru, termasuk fungsi migrasi ini juga
+//    ikut ter-paste, tidak masalah dibiarkan -- fungsi ini otomatis tidak
+//    melakukan apa-apa lagi kalau dijalankan ulang, lihat pengecekan di awal).
+// 6. Deploy > Manage deployments > edit (pensil) > Version: New version > Deploy.
+// 7. Update file index.html/tracking.html/assets di GitHub ke versi baru juga.
+//
+// PENTING: kalau kolom "Link Payment Request" lama masih ada isinya yang
+// penting, catat/backup dulu isinya (mis. sheet duplikat) sebelum menjalankan
+// migrasi ini -- fungsi ini menghapus kolom tersebut secara permanen.
+//
+// Kalau ada baris yang SEBENARNYA bukan dokumen NC (jarang terjadi karena
+// sistem lama memang khusus NC), tinggal edit manual sel "Jenis Dokumen" baris
+// tersebut di Google Sheets setelah migrasi, isi dengan salah satu:
+// "NC - Aktual", "Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)", atau "LPJ".
+function migrateToDocTracker() {
+  const sheet = getSheet();
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  if (lastRow < 1 || lastCol < 1) {
+    Logger.log('Sheet kosong, tidak ada yang perlu dimigrasi.');
+    return;
+  }
+
+  const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  // Sudah pernah dimigrasi sebelumnya? Jangan dijalankan dua kali.
+  if (headerRow.indexOf('Jenis Dokumen') !== -1) {
+    Logger.log('Sheet sudah memakai struktur baru (kolom "Jenis Dokumen" sudah ada). Migrasi dilewati.');
+    return;
+  }
+
+  // Pastikan ini memang struktur lama yang diharapkan sebelum diubah.
+  if (headerRow[5] !== 'No Payment Request') {
+    throw new Error(
+      'Struktur header tidak sesuai dugaan (kolom F seharusnya "No Payment Request", ' +
+      'ditemukan: "' + headerRow[5] + '"). Migrasi dibatalkan supaya data tidak rusak -- ' +
+      'cek ulang struktur sheet secara manual dulu.'
+    );
+  }
+
+  // 1) Sisipkan kolom baru "Jenis Dokumen" sebelum kolom F (No Payment Request).
+  //    Otomatis menggeser "No Payment Request", "Link Payment Request", dst ke kanan.
+  sheet.insertColumnBefore(6);
+  sheet.getRange(1, 6).setValue('Jenis Dokumen');
+
+  // 2) Isi kolom "Jenis Dokumen" di semua baris data lama dengan "NC - Aktual".
+  const numDataRows = lastRow - 1;
+  if (numDataRows > 0) {
+    const defaultValues = [];
+    for (let i = 0; i < numDataRows; i++) defaultValues.push(['NC - Aktual']);
+    sheet.getRange(2, 6, numDataRows, 1).setValues(defaultValues);
+  }
+
+  // 3) Ganti nama header "No Payment Request" (kini di kolom G) -> "No Dokumen".
+  sheet.getRange(1, 7).setValue('No Dokumen');
+
+  // 4) Hapus kolom "Link Payment Request" (kini di kolom H) -- sudah tidak
+  //    dipakai lagi. File Berkas dkk otomatis bergeser satu kolom ke kiri,
+  //    pas jadi kolom H seperti struktur baru.
+  sheet.deleteColumn(8);
+
+  Logger.log('Migrasi selesai: %s baris data diberi Jenis Dokumen = "NC - Aktual", kolom Link Payment Request dihapus.', numDataRows);
+}
+
+// Fungsi tambahan -- HANYA perlu dijalankan kalau Anda sempat memakai versi
+// migrasi SEBELUMNYA (yang masih membuat kolom "Link Dokumen"). Aman
+// dijalankan kapan saja: kalau kolom "Link Dokumen" tidak ada, fungsi ini
+// tidak melakukan apa-apa.
+function dropLinkDokumenColumnIfExists() {
+  const sheet = getSheet();
+  const lastCol = sheet.getLastColumn();
+  const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const idx = headerRow.indexOf('Link Dokumen'); // 0-based
+  if (idx === -1) {
+    Logger.log('Kolom "Link Dokumen" tidak ditemukan, tidak ada yang perlu dihapus.');
+    return;
+  }
+  sheet.deleteColumn(idx + 1); // getRange/deleteColumn pakai index 1-based
+  Logger.log('Kolom "Link Dokumen" berhasil dihapus.');
 }
