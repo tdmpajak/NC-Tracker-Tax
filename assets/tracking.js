@@ -12,6 +12,12 @@ let currentFilter = 'all';
 let currentJenis = 'NC - Aktual'; // dashboard aktif di sidebar kiri, default: NC - Aktual
 let isFetching = false; // cegah request numpuk kalau refresh sebelumnya belum selesai
 
+// Jenis Dokumen yang dikenali oleh 3 dashboard sidebar. Baris yang kolom
+// "Jenis Dokumen"-nya kosong/tidak sesuai salah satu dari ini TIDAK akan
+// muncul di dashboard manapun -- karena itu perlu ditandai lewat peringatan
+// di renderUnknownWarning(), supaya tidak "hilang" tanpa disadari.
+const KNOWN_JENIS = ['NC - Aktual', 'Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)', 'LPJ'];
+
 // ---------- Load data ----------
 // silent=true dipakai untuk auto-refresh: tidak menampilkan ulang "Memuat data..."
 // supaya tabel tidak berkedip/reset posisi scroll setiap beberapa detik.
@@ -44,6 +50,7 @@ async function loadData(silent = false) {
       lastDataSnapshot = newSnapshot;
       renderStats();
       renderTable();
+      renderUnknownWarning();
     }
 
     if (lastUpdated) {
@@ -66,6 +73,26 @@ async function loadData(silent = false) {
 // Baris yang termasuk dashboard/jenis dokumen yang sedang aktif di sidebar kiri
 function jenisRows() {
   return allRows.filter(r => (r['Jenis Dokumen'] || '') === currentJenis);
+}
+
+// Tandai baris yang kolom "Jenis Dokumen"-nya kosong/tidak sesuai salah satu
+// dari 3 dashboard -- baris seperti ini TIDAK muncul di dashboard manapun,
+// jadi perlu ditampilkan sebagai peringatan supaya tidak "hilang" tanpa
+// disadari (mis. karena dikirim dari form versi lama/cache browser PIC).
+function renderUnknownWarning() {
+  const box = document.getElementById('unknownJenisWarning');
+  if (!box) return;
+  const unknown = allRows.filter(r => KNOWN_JENIS.indexOf((r['Jenis Dokumen'] || '').trim()) === -1);
+  if (unknown.length === 0) {
+    box.innerHTML = '';
+    return;
+  }
+  const idList = unknown.map(r => escapeHtml(r['ID'] || '(tanpa ID)')).join(', ');
+  box.innerHTML = `
+    <div class="warning-banner">
+      ⚠️ <strong>${unknown.length} pengajuan tidak muncul di dashboard manapun</strong> karena kolom "Jenis Dokumen"-nya kosong atau tidak sesuai (kemungkinan dikirim dari form versi lama/cache browser PIC). ID pengajuan: ${idList}.
+      Perbaiki manual lewat Google Sheets -- isi kolom "Jenis Dokumen" dengan salah satu: <em>NC - Aktual</em>, <em>Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)</em>, atau <em>LPJ</em>.
+    </div>`;
 }
 
 function renderStats() {
