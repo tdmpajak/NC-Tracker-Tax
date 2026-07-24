@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kirim Berkas — Doc Tracker Tax</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="compact-form">
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand" style="text-decoration:none;"><span class="brand-mark">Doc</span> Tracker Tax</a>
+    <nav class="nav-tabs">
+      <a href="kirim.html" class="active">Kirim Berkas</a>
+      <a href="tracking.html">Tracking Doc</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Kirim Berkas Verifikasi Dokumen</h1>
+    <p>Formulir pengajuan verifikasi berkas (cek pajak). Pengisian wajib memakai huruf KAPITAL. Unggah berkas dalam format PDF.</p>
+  </div>
+
+  <div class="card">
+    <form id="submitForm">
+      <div class="form-grid">
+
+        <div class="field required">
+          <label for="cabang">Cabang</label>
+          <input type="text" id="cabang" list="cabangDatalist" placeholder="Ketik atau pilih kode cabang" autocomplete="off" required>
+          <datalist id="cabangDatalist"></datalist>
+        </div>
+
+        <div class="field required">
+          <label for="namaPic">Nama PIC yang Mengajukan</label>
+          <input type="text" id="namaPic" placeholder="NAMA LENGKAP" required>
+        </div>
+
+        <div class="field required">
+          <label for="noTelpon">No. Telepon PIC</label>
+          <input type="tel" id="noTelpon" placeholder="08XXXXXXXXXX" required>
+        </div>
+
+        <div class="field required">
+          <label for="jenisDokumen">Pilih Jenis Dokumen</label>
+          <select id="jenisDokumen" required>
+            <option value="" disabled selected>Pilih jenis dokumen</option>
+            <option value="NC - Aktual">NC - Aktual</option>
+            <option value="Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)">Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)</option>
+            <option value="LPJ">LPJ</option>
+          </select>
+        </div>
+
+        <div class="field full required">
+          <label for="noDokumen">No. Dokumen</label>
+          <div class="hint" id="noDokumenHint">Pilih jenis dokumen terlebih dahulu untuk melihat contoh format nomor.</div>
+          <textarea id="noDokumen" rows="2" placeholder="Pilih jenis dokumen terlebih dahulu" required></textarea>
+        </div>
+
+        <div class="field full required">
+          <label>Berkas PDF</label>
+          <div class="hint" style="margin-bottom:2px;">Format PDF, maksimal 10MB.</div>
+          <label class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept="application/pdf">
+            <div class="dz-icon">📄</div>
+            <div class="dz-text" id="dzText"><strong>Klik untuk pilih file</strong> atau seret PDF ke sini</div>
+          </label>
+        </div>
+
+      </div>
+
+      <div style="font-size:12px; color:var(--ink-soft); margin-top:12px; display:flex; align-items:center; gap:6px;">
+        💡 Setelah berhasil terkirim, akan muncul <strong>ID Pengajuan</strong> — mohon dicatat, karena dibutuhkan untuk membuka berkas PDF nanti.
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="submitBtn">Kirim Berkas</button>
+        <span class="status-msg" id="statusMsg"></span>
+      </div>
+
+      <div id="submitResultBox" style="display:none;"></div>
+    </form>
+  </div>
+
+  <div class="foot-bar">
+    <span>Berkas tersimpan otomatis ke Google Drive &amp; tercatat di Google Sheets.</span>
+    <span class="foot-bar-sep">•</span>
+    <span>Butuh bantuan?</span>
+    <a href="https://wa.me/6285709631983" target="_blank" class="foot-bar-link">💬 Widi</a>
+    <a href="https://wa.me/628996423769" target="_blank" class="foot-bar-link">💬 Gita</a>
+  </div>
+</div>
+
+<script src="assets/branch-config.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
